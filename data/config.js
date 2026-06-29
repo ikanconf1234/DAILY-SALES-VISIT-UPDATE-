@@ -64,7 +64,7 @@ export const appSettings = {
   contactPhone: "+971 4 3285454",
   fax: "+971 4 3285335",
   website: "www.ikaninc.com",
-  googleSheetsWebAppUrl: "https://script.google.com/macros/s/AKfycbz1cpXugyGuDQxaJaxdnQQgyVcRnaKLZjrPfj-g9jtMDHP9WeSItqSu6p81rCk85_61/exec"
+  googleSheetsWebAppUrl: "https://script.google.com/macros/s/AKfycbwQ5f1r2JVMGB-6okRFmWLPLC0-CQIdIquo96wNSSdu4WKO3vN751vUIkGbPn4pQYW5/exec"
 };
 
 export const storageKeys = {
