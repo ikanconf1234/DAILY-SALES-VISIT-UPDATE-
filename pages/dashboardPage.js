@@ -6,14 +6,17 @@ import { sampleSubmissions } from "../data/sampleSubmissions.js";
 import { getQueryParam } from "../utils/routeUtils.js";
 import { canViewReports, getAuthorizedDashboardAccess } from "../utils/permissions.js";
 import { deleteSubmission, getSubmissions, restoreSubmissions, updateSubmission } from "../services/storageService.js";
+import { getSubmissionsFromGoogleSheets } from "../services/googleSheetsService.js";
 import { exportExcelCsv, exportPdf } from "../utils/exportUtils.js";
 
 const root = document.querySelector("#app");
 const access = getAuthorizedDashboardAccess(getQueryParam("role"), getQueryParam("key"), getQueryParam("person"));
 const role = access?.role;
 const lockedPerson = access?.lockedPerson || "all";
+const accessKey = getQueryParam("key");
 const demoMode = getQueryParam("demo") === "1";
 let currentRows = [];
+let remoteRows = null;
 
 if (!role || !canViewReports(role)) {
   root.innerHTML = `
@@ -87,11 +90,12 @@ function wireEvents() {
   document.querySelector("#printButton").addEventListener("click", () => window.print());
 }
 
-function refreshReport() {
+async function refreshReport() {
   const filters = getFilterValues();
   const personFilter = lockedPerson === "all" ? filters.personId : lockedPerson;
 
-  const sourceRows = demoMode && getSubmissions().length === 0 ? sampleSubmissions : getSubmissions();
+  const localRows = demoMode && getSubmissions().length === 0 ? sampleSubmissions : getSubmissions();
+  const sourceRows = await getReportSourceRows(localRows);
 
   currentRows = sourceRows.filter((submission) => {
     const matchesPerson = personFilter === "all" || submission.salesPersonId === personFilter;
@@ -103,6 +107,21 @@ function refreshReport() {
   document.querySelector("#summaryArea").innerHTML = renderSummaryCards(currentRows);
   document.querySelector("#reportArea").innerHTML = renderReportTable(currentRows, role);
   wireTableActions();
+}
+
+async function getReportSourceRows(localRows) {
+  if (demoMode) {
+    return localRows;
+  }
+
+  try {
+    remoteRows = await getSubmissionsFromGoogleSheets({ role, key: accessKey, person: lockedPerson });
+    return remoteRows;
+  } catch (error) {
+    console.warn(error);
+    showMessage("error", "Unable to load Google Sheet report now. Showing local browser data only.");
+    return remoteRows || localRows;
+  }
 }
 
 function renderSummaryCards(rows) {
