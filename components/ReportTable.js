@@ -3,6 +3,7 @@ import { escapeHtml, formatDateTime } from "../utils/formatters.js";
 
 export function renderReportTable(rows, role) {
   const adminColumns = canEdit(role) || canDelete(role);
+  const showGps = role !== "salesperson";
 
   if (!rows.length) {
     return `<div class="empty-state">No submissions found.</div>`;
@@ -20,19 +21,19 @@ export function renderReportTable(rows, role) {
             <th>Type</th>
             <th>Contact</th>
             <th>Outcome</th>
-            <th>GPS</th>
+            ${showGps ? "<th>GPS</th>" : ""}
             ${adminColumns ? "<th>Actions</th>" : ""}
           </tr>
         </thead>
         <tbody>
-          ${rows.map((row) => renderRow(row, role, adminColumns)).join("")}
+          ${rows.map((row) => renderRow(row, role, adminColumns, showGps)).join("")}
         </tbody>
       </table>
     </div>
   `;
 }
 
-function renderRow(row, role, adminColumns) {
+function renderRow(row, role, adminColumns, showGps) {
   return `
     <tr>
       <td>${formatDateTime(row.timestamp)}</td>
@@ -42,7 +43,7 @@ function renderRow(row, role, adminColumns) {
       <td>${escapeHtml(row.companyType)}</td>
       <td>${escapeHtml(row.contactNumber)}<br><small>${escapeHtml(row.emailId)}</small></td>
       <td>${escapeHtml(row.meetingOutcome)}<br><small>${escapeHtml(row.description || row.remarks)}</small></td>
-      <td><a href="${row.mapsLink}" target="_blank" rel="noopener">Open Map</a><br><small>${escapeHtml(row.latitude)}, ${escapeHtml(row.longitude)}</small></td>
+      ${showGps ? `<td><a href="${row.mapsLink}" target="_blank" rel="noopener">Open Map</a><br><small>${escapeHtml(row.latitude)}, ${escapeHtml(row.longitude)}</small></td>` : ""}
       ${adminColumns ? `
         <td class="action-cell">
           ${canEdit(role) ? `<button class="mini-button edit" data-edit="${row.id}" type="button">Edit</button>` : ""}
